@@ -25,7 +25,38 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="antialiased">
+<body class="antialiased overflow-hidden"> <!-- Added overflow-hidden to prevent scrolling while modal is open -->
+
+    <!-- Welcome Mode Modal -->
+    <div id="mode-modal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md transition-opacity duration-300">
+        <div class="bg-darker border border-gray-800 rounded-2xl w-full max-w-3xl p-8 md:p-12 text-center shadow-2xl relative z-10 transform transition-transform duration-300">
+            <div class="mb-8">
+                <img src="img/logo.png" alt="Logo" class="h-16 mx-auto mb-6 object-contain">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">Bienvenue chez Lina Layan</h2>
+                <p class="text-gray-400 text-lg">Pour mieux vous servir, veuillez nous indiquer votre profil :</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Particulier -->
+                <button id="btn-particulier" class="mode-select-btn flex flex-col items-center justify-center p-8 rounded-xl border-2 border-gray-700 bg-dark hover:border-primary hover:bg-primary/10 transition group">
+                    <div class="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition">
+                        <i class="fa-solid fa-user text-4xl text-gray-400 group-hover:text-primary transition"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Particulier</h3>
+                    <p class="text-gray-400 text-center">Location courte durée (tarifs par jour)</p>
+                </button>
+                
+                <!-- Entreprise -->
+                <button id="btn-entreprise" class="mode-select-btn flex flex-col items-center justify-center p-8 rounded-xl border-2 border-gray-700 bg-dark hover:border-primary hover:bg-primary/10 transition group">
+                    <div class="w-20 h-20 rounded-full bg-gray-800 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition">
+                        <i class="fa-solid fa-building text-4xl text-gray-400 group-hover:text-primary transition"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">Entreprise</h3>
+                    <p class="text-gray-400 text-center">Location longue durée (tarifs par mois)</p>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Navigation -->
     <nav class="fixed w-full z-50 glass transition-all duration-300" id="navbar">
@@ -99,7 +130,7 @@
                                 class="w-full pl-10 pr-4 py-3 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
                         </div>
                     </div>
-                    <div class="w-full md:w-2/5">
+                    <div class="w-full md:w-2/5" id="container-date-fin">
                         <label for="date-fin" class="block text-sm font-medium text-gray-400 mb-2">Date de retour</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -107,6 +138,29 @@
                             </div>
                             <input type="date" id="date-fin" required min=""
                                 class="w-full pl-10 pr-4 py-3 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+                        </div>
+                    </div>
+                    
+                    <div class="w-full md:w-2/5 hidden" id="container-mois">
+                        <label for="duree-mois" class="block text-sm font-medium text-gray-400 mb-2">Durée (Mois)</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fa-regular fa-clock text-primary"></i>
+                            </div>
+                            <select id="duree-mois" class="w-full pl-10 pr-4 py-3 bg-dark border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition appearance-none">
+                                <option value="1">1 Mois</option>
+                                <option value="2">2 Mois</option>
+                                <option value="3">3 Mois</option>
+                                <option value="6">6 Mois</option>
+                                <option value="12">12 Mois</option>
+                                <option value="24">24 Mois</option>
+                                <option value="36">36 Mois</option>
+                                <option value="48">48 Mois</option>
+                                <option value="60">60 Mois</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                <i class="fa-solid fa-chevron-down text-gray-500"></i>
+                            </div>
                         </div>
                     </div>
                     <div class="w-full md:w-1/5">
@@ -144,7 +198,7 @@
             <div class="flex justify-between items-end mb-10 border-b border-gray-800 pb-4">
                 <div>
                     <h2 class="text-3xl font-bold text-white mb-2">Véhicules Disponibles</h2>
-                    <p class="text-gray-400" id="recap-dates">Pour votre séjour de <span id="nb-jours" class="text-primary font-bold">X</span> jour(s)</p>
+                    <p class="text-gray-400" id="recap-dates">Pour votre réservation de <span id="nb-jours" class="text-primary font-bold">X</span> <span id="label-duree">jour(s)</span></p>
                 </div>
                 
                 <!-- Simple Filters -->

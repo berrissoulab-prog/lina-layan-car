@@ -7,6 +7,40 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileMenu.classList.toggle('hidden');
     });
 
+    // ---- Client Mode Logic ----
+    let clientMode = null; // 'particulier' or 'entreprise'
+    const modeModal = document.getElementById('mode-modal');
+    const btnParticulier = document.getElementById('btn-particulier');
+    const btnEntreprise = document.getElementById('btn-entreprise');
+    const containerDateFin = document.getElementById('container-date-fin');
+    const containerMois = document.getElementById('container-mois');
+    const inputDateFin = document.getElementById('date-fin');
+    const inputDureeMois = document.getElementById('duree-mois');
+
+    function setClientMode(mode) {
+        clientMode = mode;
+        modeModal.classList.add('opacity-0');
+        setTimeout(() => {
+            modeModal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }, 300);
+
+        if (mode === 'particulier') {
+            containerDateFin.classList.remove('hidden');
+            containerMois.classList.add('hidden');
+            inputDateFin.required = true;
+            inputDureeMois.required = false;
+        } else {
+            containerDateFin.classList.add('hidden');
+            containerMois.classList.remove('hidden');
+            inputDateFin.required = false;
+            inputDureeMois.required = true;
+        }
+    }
+
+    btnParticulier.addEventListener('click', () => setClientMode('particulier'));
+    btnEntreprise.addEventListener('click', () => setClientMode('entreprise'));
+
     // ---- Date Logic ----
     const dateDebutInput = document.getElementById('date-debut');
     const dateFinInput = document.getElementById('date-fin');
@@ -24,29 +58,38 @@ document.addEventListener('DOMContentLoaded', () => {
         dateFinInput.min = dateDebutInput.value;
     });
 
-    let currentNbJours = 0;
-    let globalDates = { debut: '', fin: '' };
+    let currentDuration = 0;
+    let globalDates = { debut: '', fin: '', mois: '' };
 
     searchForm.addEventListener('submit', (e) => {
         e.preventDefault();
         
         const debut = new Date(dateDebutInput.value);
-        const fin = new Date(dateFinInput.value);
+        globalDates.debut = dateDebutInput.value;
 
-        if (fin <= debut) {
-            dateError.classList.remove('hidden');
-            return;
+        if (clientMode === 'particulier') {
+            const fin = new Date(dateFinInput.value);
+            if (fin <= debut) {
+                dateError.classList.remove('hidden');
+                return;
+            }
+            dateError.classList.add('hidden');
+            
+            const diffTime = Math.abs(fin - debut);
+            currentDuration = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            globalDates.fin = dateFinInput.value;
+            
+            document.getElementById('label-duree').textContent = "jour(s)";
+        } else {
+            // Entreprise Mode
+            currentDuration = parseInt(inputDureeMois.value);
+            globalDates.mois = inputDureeMois.value;
+            dateError.classList.add('hidden');
+            
+            document.getElementById('label-duree').textContent = "mois";
         }
         
-        dateError.classList.add('hidden');
-
-        // Calculate diff in days
-        const diffTime = Math.abs(fin - debut);
-        currentNbJours = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        nbJoursSpan.textContent = currentNbJours;
-        
-        globalDates.debut = dateDebutInput.value;
-        globalDates.fin = dateFinInput.value;
+        nbJoursSpan.textContent = currentDuration;
 
         // Show results and scroll
         resultsSection.classList.remove('hidden');
@@ -81,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="mt-auto pt-4 border-t border-gray-800 flex items-end justify-between">
                         <div>
                             <p class="text-xs text-gray-500 mb-1">À partir de</p>
-                            <p class="text-2xl font-bold text-primary leading-none">${v.prix_jour} <span class="text-sm font-normal text-white">DH/j</span></p>
+                            <p class="text-2xl font-bold text-primary leading-none">${clientMode === 'entreprise' ? v.prix_mois : v.prix_jour} <span class="text-sm font-normal text-white">${clientMode === 'entreprise' ? 'DH/mois' : 'DH/j'}</span></p>
                         </div>
                         <div class="text-right">
                              <p class="text-xs text-gray-500 mb-1">Caution</p>
@@ -141,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Populate Data
         document.getElementById('modal-img').src = v.image_url;
         document.getElementById('modal-title').textContent = v.marque_modele;
-        document.getElementById('modal-prix').textContent = v.prix_jour;
+        document.getElementById('modal-prix').textContent = clientMode === 'entreprise' ? v.prix_mois : v.prix_jour;
+        document.getElementById('modal-prix').nextElementSibling.textContent = clientMode === 'entreprise' ? '/ mois' : '/ jour';
         
         // Attributes string building
         const attrs = [
@@ -214,15 +258,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const carId = document.getElementById('res-car-id').value;
         const car = vehicules.find(item => item.id_vehicule === carId);
         
-        if (!car || !globalDates.debut || !globalDates.fin) {
+        if (!car || !globalDates.debut) {
             alert("Erreur: Veuillez sélectionner des dates sur la page d'accueil d'abord.");
+            return;
+        }
+        if (clientMode === 'particulier' && !globalDates.fin) {
+            alert("Erreur: Veuillez sélectionner une date de retour.");
             return;
         }
 
         // WhatsApp Agency Number
         const agencyPhone = "212662733037"; 
         
-        const message = `Bonjour Lina Layan Car Rentals,%0A%0AJe souhaite demander une réservation pour le véhicule suivant :%0A🚗 *${car.marque_modele}*%0A📅 Du: ${globalDates.debut}%0A📅 Au: ${globalDates.fin}%0A⏳ Durée: ${currentNbJours} jours%0A%0AMes coordonnées :%0A👤 Nom: ${nom}%0A📞 Tél: ${tel}%0A%0AMerci de me recontacter pour la confirmation.`;
+        let message = `Bonjour Lina Layan Car Rentals,%0A%0AJe souhaite demander une réservation pour le véhicule suivant :%0A🚗 *${car.marque_modele}*%0A`;
+        
+        if (clientMode === 'particulier') {
+            message += `📅 Du: ${globalDates.debut}%0A📅 Au: ${globalDates.fin}%0A⏳ Durée: ${currentDuration} jours%0A💰 Tarif: ${car.prix_jour} DH/jour%0A`;
+        } else {
+            message += `📅 À partir du: ${globalDates.debut}%0A⏳ Durée: ${currentDuration} mois%0A💰 Tarif: ${car.prix_mois} DH/mois%0A`;
+        }
+        
+        message += `%0AMes coordonnées :%0A👤 Nom: ${nom}%0A📞 Tél: ${tel}%0A%0AMerci de me recontacter pour la confirmation.`;
         
         const whatsappUrl = `https://wa.me/${agencyPhone}?text=${message}`;
         
