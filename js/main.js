@@ -298,18 +298,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // WhatsApp Agency Number
         const agencyPhone = "212662733037"; 
         
-        let message = `Bonjour Lina Layan Car Rentals,%0A%0AJe souhaite demander une réservation pour le véhicule suivant :%0A🚗 *${car.marque_modele}*%0A`;
+        let message = `Bonjour Lina Layan Car Rentals,%0A%0AJe souhaite demander une réservation pour le véhicule suivant :%0A%F0%9F%9A%97 *${car.marque_modele}*%0A`;
         
         let totalPrice = 0;
         if (clientMode === 'particulier') {
             totalPrice = car.prix_jour * currentDuration;
-            message += `📅 Du: ${globalDates.debut}%0A📅 Au: ${globalDates.fin}%0A⏳ Durée: ${currentDuration} jours%0A💰 Tarif: ${car.prix_jour} DH/jour%0A💵 *Total estimé: ${totalPrice} DH*%0A`;
+            message += `%F0%9F%93%85 Du: ${globalDates.debut}%0A%F0%9F%93%85 Au: ${globalDates.fin}%0A%E2%8F%B3 Durée: ${currentDuration} jours%0A%F0%9F%92%B0 Tarif: ${car.prix_jour} DH/jour%0A%F0%9F%92%B5 *Total estimé: ${totalPrice} DH*%0A`;
         } else {
             totalPrice = car.prix_mois * currentDuration;
-            message += `📅 À partir du: ${globalDates.debut}%0A⏳ Durée: ${currentDuration} mois%0A💰 Tarif: ${car.prix_mois} DH/mois%0A💵 *Total estimé: ${totalPrice} DH*%0A`;
+            message += `%F0%9F%93%85 À partir du: ${globalDates.debut}%0A%E2%8F%B3 Durée: ${currentDuration} mois%0A%F0%9F%92%B0 Tarif: ${car.prix_mois} DH/mois%0A%F0%9F%92%B5 *Total estimé: ${totalPrice} DH*%0A`;
         }
         
-        message += `%0AMes coordonnées :%0A👤 Nom: ${nom}%0A📞 Tél: ${tel}%0A%0AMerci de me recontacter pour la confirmation.`;
+        message += `%0AMes coordonnées :%0A%F0%9F%91%A4 Nom: ${nom}%0A%F0%9F%93%9E Tél: ${tel}%0A%0AMerci de me recontacter pour la confirmation.`;
         
         const whatsappUrl = `https://wa.me/${agencyPhone}?text=${message}`;
         
