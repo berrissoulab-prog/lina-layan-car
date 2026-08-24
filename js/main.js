@@ -144,7 +144,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         grid.innerHTML = '';
         data.forEach(v => {
             const card = document.createElement('div');
-            const isUnavailable = v.disponible === false;
+            
+            // Check manual toggle first
+            let isUnavailable = v.disponible === false;
+            
+            // If it's not manually toggled off, check dates
+            if (!isUnavailable && globalDates.debut && v.indispo_debut && v.indispo_fin) {
+                const searchStart = new Date(globalDates.debut);
+                let searchEnd = new Date(globalDates.debut);
+                
+                if (clientMode === 'particulier' && globalDates.fin) {
+                    searchEnd = new Date(globalDates.fin);
+                } else if (clientMode === 'entreprise') {
+                    searchEnd.setMonth(searchEnd.getMonth() + currentDuration);
+                }
+
+                const indispoStart = new Date(v.indispo_debut);
+                const indispoEnd = new Date(v.indispo_fin);
+
+                // Overlap logic: A overlaps B if A.start <= B.end AND A.end >= B.start
+                if (searchStart <= indispoEnd && searchEnd >= indispoStart) {
+                    isUnavailable = true;
+                }
+            }
             
             card.className = `glass-card rounded-2xl overflow-hidden flex flex-col h-full animate-fade-in ${isUnavailable ? 'opacity-70 grayscale-[50%]' : ''}`;
             

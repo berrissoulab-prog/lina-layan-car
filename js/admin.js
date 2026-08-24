@@ -93,11 +93,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     </td>
                     <td class="px-6 py-4 font-bold text-white">${v.marque_modele}</td>
                     <td class="px-6 py-4">${v.prix_jour} DH/j <br> <span class="text-xs text-gray-500">${v.prix_mois} DH/m</span></td>
-                    <td class="px-6 py-4 text-center">
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" class="sr-only peer toggle-dispo" data-id="${v.id_vehicule}" ${isChecked}>
-                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                        </label>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col items-center gap-2">
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer toggle-dispo" data-id="${v.id_vehicule}" ${isChecked}>
+                                <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                            
+                            <div class="mt-2 text-xs flex flex-col gap-1 w-full max-w-[200px]">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="text-gray-400">Du:</span>
+                                    <input type="date" id="date-debut-${v.id_vehicule}" value="${v.indispo_debut || ''}" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary">
+                                </div>
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="text-gray-400">Au:</span>
+                                    <input type="date" id="date-fin-${v.id_vehicule}" value="${v.indispo_fin || ''}" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary">
+                                </div>
+                                <button class="mt-1 bg-gray-700 hover:bg-gray-600 text-white rounded px-2 py-1 save-dates-btn" data-id="${v.id_vehicule}">
+                                    <i class="fa-solid fa-floppy-disk text-primary"></i> Sauvegarder dates
+                                </button>
+                            </div>
+                        </div>
                     </td>
                     <td class="px-6 py-4">
                         <button class="text-blue-500 hover:text-blue-400 mr-3 edit-btn" data-id="${v.id_vehicule}">Modifier</button>
@@ -116,6 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.querySelectorAll('.toggle-dispo').forEach(checkbox => {
                 checkbox.addEventListener('change', (e) => toggleAvailability(e.target.getAttribute('data-id'), e.target.checked));
+            });
+            document.querySelectorAll('.save-dates-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => saveIndispoDates(e.target.closest('button').getAttribute('data-id')));
             });
 
         } catch (error) {
@@ -286,6 +305,24 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Erreur de mise à jour: ", error);
             alert("Erreur lors du changement de statut");
             loadVehicles(); // revert toggle visually
+        }
+    }
+
+    // --- Save Dates Logic ---
+    async function saveIndispoDates(id) {
+        const dateDebut = document.getElementById(`date-debut-${id}`).value;
+        const dateFin = document.getElementById(`date-fin-${id}`).value;
+        
+        try {
+            await setDoc(doc(db, "vehicules", id), { 
+                indispo_debut: dateDebut,
+                indispo_fin: dateFin
+            }, { merge: true });
+            
+            alert("Dates sauvegardées avec succès !");
+        } catch (error) {
+            console.error("Erreur lors de la sauvegarde des dates: ", error);
+            alert("Erreur lors de la sauvegarde");
         }
     }
 
