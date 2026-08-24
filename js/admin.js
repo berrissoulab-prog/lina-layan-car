@@ -329,8 +329,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const wrapper = document.getElementById(`dates-wrapper-${id}`);
             if (isAvailable) {
-                // If making it available, hide dates and clear them from DB
+                // If making it available, hide dates and clear them from DB and UI
                 wrapper.style.display = 'none';
+                document.getElementById(`date-debut-${id}`).value = '';
+                document.getElementById(`date-fin-${id}`).value = '';
+                
                 await setDoc(doc(db, "vehicules", id), { 
                     disponible: true,
                     indispo_debut: "",
