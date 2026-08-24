@@ -100,14 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
                             </label>
                             
-                            <div class="mt-2 text-xs flex flex-col gap-1 w-full max-w-[200px]">
+                            <div class="mt-2 text-xs flex-col gap-1 w-full max-w-[200px] date-inputs-wrapper" id="dates-wrapper-${v.id_vehicule}" style="display: ${isChecked ? 'none' : 'flex'}">
                                 <div class="flex items-center justify-between gap-1">
                                     <span class="text-gray-400">Du:</span>
-                                    <input type="date" id="date-debut-${v.id_vehicule}" value="${v.indispo_debut || ''}" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary">
+                                    <input type="date" id="date-debut-${v.id_vehicule}" value="${v.indispo_debut || ''}" onclick="this.showPicker()" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary cursor-pointer w-full ml-2">
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
                                     <span class="text-gray-400">Au:</span>
-                                    <input type="date" id="date-fin-${v.id_vehicule}" value="${v.indispo_fin || ''}" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary">
+                                    <input type="date" id="date-fin-${v.id_vehicule}" value="${v.indispo_fin || ''}" onclick="this.showPicker()" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary cursor-pointer w-full ml-2">
                                 </div>
                                 <button class="mt-1 bg-gray-700 hover:bg-gray-600 text-white rounded px-2 py-1 save-dates-btn" data-id="${v.id_vehicule}">
                                     <i class="fa-solid fa-floppy-disk text-primary"></i> Sauvegarder dates
@@ -166,12 +166,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('car-modele').value = v.marque_modele;
                 document.getElementById('car-prix-jour').value = v.prix_jour;
                 document.getElementById('car-prix-mois').value = v.prix_mois;
+                document.getElementById('car-prix-mois').value = v.prix_mois;
+                
+                // Set details
+                document.getElementById('car-carburant').value = v.carburant || "Diesel";
+                document.getElementById('car-boite').value = v.boite || "Manuelle";
+                document.getElementById('car-passagers').value = v.passagers || 5;
+                document.getElementById('car-portes').value = v.portes || 5;
+                document.getElementById('car-valises').value = v.valises || 2;
+                document.getElementById('car-sacs').value = v.sacs || 1;
+                document.getElementById('car-chevaux').value = v.chevaux || 6;
+                document.getElementById('car-climatisation').value = v.climatisation || "Oui";
+                document.getElementById('car-gps').value = v.gps || "Non";
+                document.getElementById('car-franchise').value = v.franchise_vol || "10% de la valeur";
+                document.getElementById('car-caution').value = v.caution || 5000;
                 
                 urlInput.value = v.image_url;
                 fileInput.required = false; // Not required when editing unless changing
                 previewEl.classList.remove('hidden');
                 previewEl.querySelector('span').textContent = v.image_url.split('/').pop() || 'Image URL';
             }
+        } else {
+            // New car mode: set defaults
+            document.getElementById('car-carburant').value = "Diesel";
+            document.getElementById('car-boite').value = "Manuelle";
+            document.getElementById('car-passagers').value = 5;
+            document.getElementById('car-portes').value = 5;
+            document.getElementById('car-valises').value = 2;
+            document.getElementById('car-sacs').value = 1;
+            document.getElementById('car-chevaux').value = 6;
+            document.getElementById('car-climatisation').value = "Oui";
+            document.getElementById('car-gps').value = "Non";
+            document.getElementById('car-franchise').value = "10% de la valeur";
+            document.getElementById('car-caution').value = 5000;
         }
         
         carModal.classList.remove('hidden');
@@ -209,19 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 imageUrl = await getBase64(file);
             }
             
-            // Find existing data if editing, or create a default object for new
+            // Retain fields that aren't edited in the form
             const existingData = allVehicles.find(item => item.id_vehicule === carId) || {
-                boite: "Manuelle",
-                carburant: "Diesel",
-                caution: 5000,
-                franchise_vol: "10% de la valeur",
-                passagers: 5,
-                portes: 5,
-                valises: 2,
-                sacs: 1,
-                chevaux: 6,
-                climatisation: "Oui",
-                gps: "Non",
                 age_min: "21 ans",
                 permis_min: "2 ans",
                 services: ["Kilométrage illimité", "Assurance tous risques"]
@@ -231,9 +247,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 ...existingData,
                 id_vehicule: carId,
                 marque_modele: document.getElementById('car-modele').value,
-                prix_jour: parseInt(document.getElementById('car-prix-jour').value),
-                prix_mois: parseInt(document.getElementById('car-prix-mois').value),
-                image_url: imageUrl
+                prix_jour: parseInt(document.getElementById('car-prix-jour').value) || 0,
+                prix_mois: parseInt(document.getElementById('car-prix-mois').value) || 0,
+                image_url: imageUrl,
+                carburant: document.getElementById('car-carburant').value,
+                boite: document.getElementById('car-boite').value,
+                passagers: parseInt(document.getElementById('car-passagers').value) || 5,
+                portes: parseInt(document.getElementById('car-portes').value) || 5,
+                valises: parseInt(document.getElementById('car-valises').value) || 0,
+                sacs: parseInt(document.getElementById('car-sacs').value) || 0,
+                chevaux: parseInt(document.getElementById('car-chevaux').value) || 6,
+                climatisation: document.getElementById('car-climatisation').value,
+                gps: document.getElementById('car-gps').value,
+                franchise_vol: document.getElementById('car-franchise').value,
+                caution: parseInt(document.getElementById('car-caution').value) || 0,
             };
 
             await setDoc(doc(db, "vehicules", carId), newCarData);
@@ -300,7 +327,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Status Toggle Logic ---
     async function toggleAvailability(id, isAvailable) {
         try {
-            await setDoc(doc(db, "vehicules", id), { disponible: isAvailable }, { merge: true });
+            const wrapper = document.getElementById(`dates-wrapper-${id}`);
+            if (isAvailable) {
+                // If making it available, hide dates and clear them from DB
+                wrapper.style.display = 'none';
+                await setDoc(doc(db, "vehicules", id), { 
+                    disponible: true,
+                    indispo_debut: "",
+                    indispo_fin: ""
+                }, { merge: true });
+            } else {
+                // If making it unavailable, show dates
+                wrapper.style.display = 'flex';
+                await setDoc(doc(db, "vehicules", id), { disponible: false }, { merge: true });
+            }
         } catch (error) {
             console.error("Erreur de mise à jour: ", error);
             alert("Erreur lors du changement de statut");

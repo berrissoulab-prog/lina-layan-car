@@ -66,7 +66,7 @@
                 </div>
                 
                 <div class="overflow-x-auto bg-black/40 rounded-xl border border-gray-800">
-                    <table class="w-full text-left text-sm">
+                    <table class="w-full text-left text-sm min-w-[900px]">
                         <thead class="bg-gray-900 text-gray-400 uppercase">
                             <tr>
                                 <th class="px-6 py-4">Image</th>
@@ -126,14 +126,79 @@
                         <input type="text" id="car-modele" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none" required>
                     </div>
                     
-                    <div class="flex gap-4 mb-4">
-                        <div class="flex-1">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
                             <label class="block text-sm text-gray-400 mb-1">Prix par Jour (DH)</label>
                             <input type="number" id="car-prix-jour" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none" required>
                         </div>
-                        <div class="flex-1">
+                        <div>
                             <label class="block text-sm text-gray-400 mb-1">Prix par Mois (DH)</label>
                             <input type="number" id="car-prix-mois" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none" required>
+                        </div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Carburant</label>
+                            <select id="car-carburant" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                                <option value="Diesel">Diesel</option>
+                                <option value="Essence">Essence</option>
+                                <option value="Hybride">Hybride</option>
+                                <option value="Électrique">Électrique</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Boîte</label>
+                            <select id="car-boite" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                                <option value="Manuelle">Manuelle</option>
+                                <option value="Automatique">Automatique</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Passagers</label>
+                            <input type="number" id="car-passagers" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Portes</label>
+                            <input type="number" id="car-portes" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Valises</label>
+                            <input type="number" id="car-valises" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Sacs</label>
+                            <input type="number" id="car-sacs" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Climatisation</label>
+                            <select id="car-climatisation" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                                <option value="Oui">Oui</option>
+                                <option value="Non">Non</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">GPS</label>
+                            <select id="car-gps" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                                <option value="Oui">Oui</option>
+                                <option value="Non">Non</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Chevaux Fiscaux</label>
+                            <input type="number" id="car-chevaux" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Caution (DH)</label>
+                            <input type="number" id="car-caution" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Franchise vol</label>
+                            <input type="text" id="car-franchise" class="w-full bg-black border border-gray-700 rounded p-2 text-white focus:border-primary focus:outline-none">
                         </div>
                     </div>
 
