@@ -1,4 +1,22 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { db, collection, getDocs, addDoc } from "./firebase-config.js";
+
+document.addEventListener('DOMContentLoaded', async () => {
+    
+    // ---- Global State ----
+    let vehicules = [];
+    
+    // Fetch vehicles from Firebase
+    try {
+        const querySnapshot = await getDocs(collection(db, "vehicules"));
+        querySnapshot.forEach((docSnap) => {
+            const v = docSnap.data();
+            v.id_vehicule = docSnap.id;
+            vehicules.push(v);
+        });
+    } catch (error) {
+        console.error("Erreur lors du chargement des véhicules:", error);
+    }
+
     // ---- Mobile Menu ----
     const mobileBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -111,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show results and scroll
         resultsSection.classList.remove('hidden');
-        renderVehicles(vehicules); // from data/vehicules.js
+        renderVehicles(vehicules); // from Firebase
         
         setTimeout(() => {
             resultsSection.scrollIntoView({ behavior: 'smooth' });
@@ -126,14 +144,21 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.innerHTML = '';
         data.forEach(v => {
             const card = document.createElement('div');
-            card.className = 'glass-card rounded-2xl overflow-hidden flex flex-col h-full animate-fade-in';
+            const isUnavailable = v.disponible === false;
+            
+            card.className = `glass-card rounded-2xl overflow-hidden flex flex-col h-full animate-fade-in ${isUnavailable ? 'opacity-70 grayscale-[50%]' : ''}`;
             
             card.innerHTML = `
                 <div class="relative h-48 overflow-hidden">
-                    <img src="${v.image_url}" alt="${v.marque_modele}" class="w-full h-full object-cover transition duration-500 hover:scale-110">
+                    <img src="${v.image_url}" alt="${v.marque_modele}" class="w-full h-full object-cover ${!isUnavailable ? 'transition duration-500 hover:scale-110' : ''}">
                     <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-semibold border border-white/10">
                         ${v.boite}
                     </div>
+                    ${isUnavailable ? `
+                    <div class="absolute inset-0 bg-red-900/40 flex items-center justify-center">
+                        <span class="bg-red-600 text-white font-bold px-4 py-2 rounded-lg transform -rotate-12 border-2 border-white shadow-xl">En Location</span>
+                    </div>
+                    ` : ''}
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
                     <h3 class="text-xl font-bold text-white mb-1">${v.marque_modele}</h3>
@@ -150,9 +175,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                     
+                    ${isUnavailable ? `
+                    <button class="mt-5 w-full bg-gray-800 text-gray-400 py-2 rounded-lg font-bold text-sm cursor-not-allowed" disabled>
+                        Indisponible
+                    </button>
+                    ` : `
                     <button class="mt-5 w-full btn-primary py-2 rounded-lg font-bold text-sm open-modal-btn" data-id="${v.id_vehicule}">
                         Plus de détails
                     </button>
+                    `}
                 </div>
             `;
             grid.appendChild(card);
@@ -275,11 +306,16 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn.addEventListener('click', closeModal);
     overlay.addEventListener('click', closeModal);
 
-    // ---- WhatsApp Reservation Form ----
+    // ---- WhatsApp Reservation Form & Saving to Firebase ----
     const reservationForm = document.getElementById('reservation-form');
     
-    reservationForm.addEventListener('submit', (e) => {
+    reservationForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const submitBtn = reservationForm.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> En cours...';
         
         const nom = document.getElementById('res-nom').value;
         const tel = document.getElementById('res-tel').value;
@@ -288,11 +324,43 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (!car || !globalDates.debut) {
             alert("Erreur: Veuillez sélectionner des dates sur la page d'accueil d'abord.");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
             return;
         }
         if (clientMode === 'particulier' && !globalDates.fin) {
             alert("Erreur: Veuillez sélectionner une date de retour.");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
             return;
+        }
+
+        let totalPrice = 0;
+        if (clientMode === 'particulier') {
+            totalPrice = car.prix_jour * currentDuration;
+        } else {
+            totalPrice = car.prix_mois * currentDuration;
+        }
+
+        // Save reservation to Firebase
+        try {
+            await addDoc(collection(db, "reservations"), {
+                vehicule_id: car.id_vehicule,
+                marque_modele: car.marque_modele,
+                client_nom: nom,
+                client_tel: tel,
+                client_mode: clientMode,
+                date_debut: globalDates.debut,
+                date_fin: clientMode === 'particulier' ? globalDates.fin : null,
+                duree_mois: clientMode === 'entreprise' ? currentDuration : null,
+                duree_jours: clientMode === 'particulier' ? currentDuration : null,
+                prix_total: totalPrice,
+                date_creation: new Date().toISOString(),
+                statut: "En attente" // Default status
+            });
+        } catch (error) {
+            console.error("Error saving reservation: ", error);
+            // Even if save fails, we proceed to WhatsApp so they don't lose the client
         }
 
         // WhatsApp Agency Number
@@ -300,12 +368,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let message = `Bonjour Lina Layan Car Rentals,%0A%0AJe souhaite demander une réservation pour le véhicule suivant :%0A%F0%9F%9A%97 *${car.marque_modele}*%0A`;
         
-        let totalPrice = 0;
         if (clientMode === 'particulier') {
-            totalPrice = car.prix_jour * currentDuration;
             message += `%F0%9F%93%85 Du: ${globalDates.debut}%0A%F0%9F%93%85 Au: ${globalDates.fin}%0A%E2%8F%B3 Durée: ${currentDuration} jours%0A%F0%9F%92%B0 Tarif: ${car.prix_jour} DH/jour%0A%F0%9F%92%B5 *Total estimé: ${totalPrice} DH*%0A`;
         } else {
-            totalPrice = car.prix_mois * currentDuration;
             message += `%F0%9F%93%85 À partir du: ${globalDates.debut}%0A%E2%8F%B3 Durée: ${currentDuration} mois%0A%F0%9F%92%B0 Tarif: ${car.prix_mois} DH/mois%0A%F0%9F%92%B5 *Total estimé: ${totalPrice} DH*%0A`;
         }
         
@@ -313,9 +378,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const whatsappUrl = `https://wa.me/${agencyPhone}?text=${message}`;
         
+        // Restore button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        
         // Open WhatsApp in new tab
         window.open(whatsappUrl, '_blank');
-        
         closeModal();
     });
 

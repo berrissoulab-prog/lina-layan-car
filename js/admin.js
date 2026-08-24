@@ -86,12 +86,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 allVehicles.push(v);
 
                 const tr = document.createElement('tr');
+                const isChecked = v.disponible !== false ? 'checked' : '';
                 tr.innerHTML = `
                     <td class="px-6 py-4">
                         <img src="${v.image_url}" alt="${v.marque_modele}" class="h-12 w-20 object-cover rounded">
                     </td>
                     <td class="px-6 py-4 font-bold text-white">${v.marque_modele}</td>
                     <td class="px-6 py-4">${v.prix_jour} DH/j <br> <span class="text-xs text-gray-500">${v.prix_mois} DH/m</span></td>
+                    <td class="px-6 py-4 text-center">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer toggle-dispo" data-id="${v.id_vehicule}" ${isChecked}>
+                            <div class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                        </label>
+                    </td>
                     <td class="px-6 py-4">
                         <button class="text-blue-500 hover:text-blue-400 mr-3 edit-btn" data-id="${v.id_vehicule}">Modifier</button>
                         <button class="text-red-500 hover:text-red-400 delete-btn" data-id="${v.id_vehicule}">Supprimer</button>
@@ -106,6 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => deleteVehicle(e.target.getAttribute('data-id')));
+            });
+            document.querySelectorAll('.toggle-dispo').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => toggleAvailability(e.target.getAttribute('data-id'), e.target.checked));
             });
 
         } catch (error) {
@@ -265,6 +275,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Erreur lors de la suppression: ", error);
                 alert("Erreur lors de la suppression");
             }
+        }
+    }
+
+    // --- Status Toggle Logic ---
+    async function toggleAvailability(id, isAvailable) {
+        try {
+            await setDoc(doc(db, "vehicules", id), { disponible: isAvailable }, { merge: true });
+        } catch (error) {
+            console.error("Erreur de mise à jour: ", error);
+            alert("Erreur lors du changement de statut");
+            loadVehicles(); // revert toggle visually
         }
     }
 
