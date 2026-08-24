@@ -119,6 +119,14 @@ document.addEventListener('DOMContentLoaded', () => {
         carForm.reset();
         document.getElementById('car-id').value = '';
         document.getElementById('modal-title').textContent = "Ajouter un Véhicule";
+        
+        const previewEl = document.getElementById('car-image-preview');
+        const urlInput = document.getElementById('car-image-url');
+        const fileInput = document.getElementById('car-image-file');
+        
+        previewEl.classList.add('hidden');
+        urlInput.value = '';
+        fileInput.required = true;
 
         if (id) {
             // Editing mode
@@ -129,7 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('car-modele').value = v.marque_modele;
                 document.getElementById('car-prix-jour').value = v.prix_jour;
                 document.getElementById('car-prix-mois').value = v.prix_mois;
-                document.getElementById('car-image').value = v.image_url;
+                
+                urlInput.value = v.image_url;
+                fileInput.required = false; // Not required when editing unless changing
+                previewEl.classList.remove('hidden');
+                previewEl.querySelector('span').textContent = v.image_url.split('/').pop() || 'Image URL';
             }
         }
         
@@ -150,48 +162,98 @@ document.addEventListener('DOMContentLoaded', () => {
     carForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
+        const submitBtn = carForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enregistrement...';
+        
         const idInput = document.getElementById('car-id').value;
         const isNew = !idInput;
-        
-        // Use existing ID or create a new unique one
         const carId = isNew ? 'veh_' + Date.now() : idInput;
         
-        // Find existing data if editing, or create a default object for new
-        const existingData = allVehicles.find(item => item.id_vehicule === carId) || {
-            boite: "Manuelle",
-            carburant: "Diesel",
-            caution: 5000,
-            franchise_vol: "10% de la valeur",
-            passagers: 5,
-            portes: 5,
-            valises: 2,
-            sacs: 1,
-            chevaux: 6,
-            climatisation: "Oui",
-            gps: "Non",
-            age_min: "21 ans",
-            permis_min: "2 ans",
-            services: ["Kilométrage illimité", "Assurance tous risques"]
-        };
-
-        const newCarData = {
-            ...existingData,
-            id_vehicule: carId,
-            marque_modele: document.getElementById('car-modele').value,
-            prix_jour: parseInt(document.getElementById('car-prix-jour').value),
-            prix_mois: parseInt(document.getElementById('car-prix-mois').value),
-            image_url: document.getElementById('car-image').value
-        };
-
+        let imageUrl = document.getElementById('car-image-url').value;
+        const fileInput = document.getElementById('car-image-file');
+        
         try {
+            // Convert image to Base64 if a new file is selected
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                imageUrl = await getBase64(file);
+            }
+            
+            // Find existing data if editing, or create a default object for new
+            const existingData = allVehicles.find(item => item.id_vehicule === carId) || {
+                boite: "Manuelle",
+                carburant: "Diesel",
+                caution: 5000,
+                franchise_vol: "10% de la valeur",
+                passagers: 5,
+                portes: 5,
+                valises: 2,
+                sacs: 1,
+                chevaux: 6,
+                climatisation: "Oui",
+                gps: "Non",
+                age_min: "21 ans",
+                permis_min: "2 ans",
+                services: ["Kilométrage illimité", "Assurance tous risques"]
+            };
+
+            const newCarData = {
+                ...existingData,
+                id_vehicule: carId,
+                marque_modele: document.getElementById('car-modele').value,
+                prix_jour: parseInt(document.getElementById('car-prix-jour').value),
+                prix_mois: parseInt(document.getElementById('car-prix-mois').value),
+                image_url: imageUrl
+            };
+
             await setDoc(doc(db, "vehicules", carId), newCarData);
             closeModal();
             loadVehicles(); // Reload table
         } catch (error) {
             console.error("Erreur lors de l'enregistrement: ", error);
-            alert("Erreur lors de l'enregistrement");
+            alert("Erreur lors de l'enregistrement: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enregistrer';
         }
     });
+
+    // --- Helper function to convert File to Base64 with compression ---
+    function getBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Max width 800px to save space in Firestore (1MB limit)
+                    const MAX_WIDTH = 800;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > MAX_WIDTH) {
+                        height = Math.round((height * MAX_WIDTH) / width);
+                        width = MAX_WIDTH;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Compress to JPEG 0.7 quality
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    resolve(dataUrl);
+                };
+                img.onerror = (error) => reject(error);
+            };
+            reader.onerror = (error) => reject(error);
+        });
+    }
 
     // --- Delete Logic ---
     async function deleteVehicle(id) {
