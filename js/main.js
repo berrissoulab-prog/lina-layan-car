@@ -36,6 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
             inputDateFin.required = false;
             inputDureeMois.required = true;
         }
+        
+        if (typeof updateMinFinDate === 'function') {
+            updateMinFinDate();
+        }
     }
 
     btnParticulier.addEventListener('click', () => setClientMode('particulier'));
@@ -50,13 +54,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const nbJoursSpan = document.getElementById('nb-jours');
     
     // Set min date to today
-    const today = new Date().toISOString().split('T')[0];
-    dateDebutInput.min = today;
-    dateFinInput.min = today;
+    const todayStr = new Date().toISOString().split('T')[0];
+    dateDebutInput.min = todayStr;
+    
+    function updateMinFinDate() {
+        let baseDate = new Date(dateDebutInput.value || todayStr);
+        if (clientMode === 'particulier') {
+            // Minimum 4 days for particulier
+            baseDate.setDate(baseDate.getDate() + 4);
+        }
+        dateFinInput.min = baseDate.toISOString().split('T')[0];
+        
+        // If current fin date is less than the new min, clear it
+        if (dateFinInput.value && new Date(dateFinInput.value) < baseDate) {
+            dateFinInput.value = '';
+        }
+    }
+    
+    // Call it once on load
+    updateMinFinDate();
 
-    dateDebutInput.addEventListener('change', () => {
-        dateFinInput.min = dateDebutInput.value;
-    });
+    dateDebutInput.addEventListener('change', updateMinFinDate);
 
     let currentDuration = 0;
     let globalDates = { debut: '', fin: '', mois: '' };
@@ -187,6 +205,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modal-prix').textContent = clientMode === 'entreprise' ? v.prix_mois : v.prix_jour;
         document.getElementById('modal-prix').nextElementSibling.textContent = clientMode === 'entreprise' ? '/ mois' : '/ jour';
         
+        // Total Price Calculation
+        const totalContainer = document.getElementById('modal-total-container');
+        if (totalContainer && currentDuration > 0) {
+            const totalPrice = clientMode === 'entreprise' ? (v.prix_mois * currentDuration) : (v.prix_jour * currentDuration);
+            document.getElementById('modal-total-price').textContent = totalPrice + ' DH';
+            totalContainer.classList.remove('hidden');
+        } else if (totalContainer) {
+            totalContainer.classList.add('hidden');
+        }
+        
         // Attributes string building
         const attrs = [
             `${v.carburant}`,
@@ -272,10 +300,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         let message = `Bonjour Lina Layan Car Rentals,%0A%0AJe souhaite demander une réservation pour le véhicule suivant :%0A🚗 *${car.marque_modele}*%0A`;
         
+        let totalPrice = 0;
         if (clientMode === 'particulier') {
-            message += `📅 Du: ${globalDates.debut}%0A📅 Au: ${globalDates.fin}%0A⏳ Durée: ${currentDuration} jours%0A💰 Tarif: ${car.prix_jour} DH/jour%0A`;
+            totalPrice = car.prix_jour * currentDuration;
+            message += `📅 Du: ${globalDates.debut}%0A📅 Au: ${globalDates.fin}%0A⏳ Durée: ${currentDuration} jours%0A💰 Tarif: ${car.prix_jour} DH/jour%0A💵 *Total estimé: ${totalPrice} DH*%0A`;
         } else {
-            message += `📅 À partir du: ${globalDates.debut}%0A⏳ Durée: ${currentDuration} mois%0A💰 Tarif: ${car.prix_mois} DH/mois%0A`;
+            totalPrice = car.prix_mois * currentDuration;
+            message += `📅 À partir du: ${globalDates.debut}%0A⏳ Durée: ${currentDuration} mois%0A💰 Tarif: ${car.prix_mois} DH/mois%0A💵 *Total estimé: ${totalPrice} DH*%0A`;
         }
         
         message += `%0AMes coordonnées :%0A👤 Nom: ${nom}%0A📞 Tél: ${tel}%0A%0AMerci de me recontacter pour la confirmation.`;
