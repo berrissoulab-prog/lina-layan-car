@@ -102,11 +102,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             <div class="mt-2 text-xs flex-col gap-1 w-full max-w-[200px] date-inputs-wrapper" id="dates-wrapper-${v.id_vehicule}" style="display: ${isChecked ? 'none' : 'flex'}">
                                 <div class="flex items-center justify-between gap-1">
-                                    <span class="text-gray-400">Du:</span>
+                                    <span class="text-gray-400">Sortie le:</span>
                                     <input type="date" id="date-debut-${v.id_vehicule}" value="${v.indispo_debut || ''}" onclick="this.showPicker()" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary cursor-pointer w-full ml-2">
                                 </div>
                                 <div class="flex items-center justify-between gap-1">
-                                    <span class="text-gray-400">Au:</span>
+                                    <span class="text-gray-400">Retour le:</span>
                                     <input type="date" id="date-fin-${v.id_vehicule}" value="${v.indispo_fin || ''}" onclick="this.showPicker()" class="bg-gray-800 text-gray-300 border border-gray-600 rounded px-1 py-0.5 focus:outline-none focus:border-primary cursor-pointer w-full ml-2">
                                 </div>
                                 <button class="mt-1 bg-gray-700 hover:bg-gray-600 text-white rounded px-2 py-1 save-dates-btn" data-id="${v.id_vehicule}">

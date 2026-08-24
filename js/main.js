@@ -146,25 +146,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             const card = document.createElement('div');
             
             // Check manual toggle first
-            let isUnavailable = v.disponible === false;
+            let isUnavailable = false;
             
-            // If it's not manually toggled off, check dates
-            if (!isUnavailable && globalDates.debut && v.indispo_debut && v.indispo_fin) {
-                const searchStart = new Date(globalDates.debut);
-                let searchEnd = new Date(globalDates.debut);
-                
-                if (clientMode === 'particulier' && globalDates.fin) {
-                    searchEnd = new Date(globalDates.fin);
-                } else if (clientMode === 'entreprise') {
-                    searchEnd.setMonth(searchEnd.getMonth() + currentDuration);
-                }
-
-                const indispoStart = new Date(v.indispo_debut);
-                const indispoEnd = new Date(v.indispo_fin);
-
-                // Overlap logic: A overlaps B if A.start <= B.end AND A.end >= B.start
-                if (searchStart <= indispoEnd && searchEnd >= indispoStart) {
+            if (v.disponible === false) {
+                if (!v.indispo_debut && !v.indispo_fin) {
+                    // Toggled off with no dates = indefinitely unavailable
                     isUnavailable = true;
+                } else {
+                    // Dates are provided, check overlap
+                    let searchStart = globalDates.debut ? new Date(globalDates.debut) : new Date();
+                    searchStart.setHours(0,0,0,0);
+                    
+                    let searchEnd = new Date(searchStart);
+                    if (globalDates.fin && clientMode === 'particulier') {
+                        searchEnd = new Date(globalDates.fin);
+                    } else if (clientMode === 'entreprise') {
+                        searchEnd.setMonth(searchEnd.getMonth() + currentDuration);
+                    }
+                    searchEnd.setHours(23,59,59,999);
+
+                    // Unavailability bounds
+                    let carOutStart = v.indispo_debut ? new Date(v.indispo_debut) : new Date(0); 
+                    carOutStart.setHours(0,0,0,0);
+                    
+                    let carOutEnd = v.indispo_fin ? new Date(v.indispo_fin) : new Date(8640000000000000); 
+                    carOutEnd.setHours(23,59,59,999);
+
+                    // Overlap logic: searchStart <= carOutEnd AND searchEnd >= carOutStart
+                    if (searchStart <= carOutEnd && searchEnd >= carOutStart) {
+                        isUnavailable = true;
+                    }
                 }
             }
             
